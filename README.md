@@ -1,8 +1,8 @@
 # Robofinity
 
-Modular robotics chassis system — Gridfinity floor + DIN rail walls + M3 heat set inserts.
+Open-source modular robotics chassis — Gridfinity floor, DIN rail walls, M3 screws and heat set inserts. Part of the ORCA robot project, which you can find on my GitHub.  
 
-**Live site:** https://lennykossyk.github.io/robofinity
+**Live site:** https://lennykossyk.github.io/Robofinity/
 
 ## Built with
 
