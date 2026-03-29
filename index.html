@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robofinity</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #111;
+    color: #e8e8e8;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left {
+    border-right: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .left::-webkit-scrollbar { display: none; }
+
+  .left-header {
+    padding: 36px 32px 28px;
+    border-bottom: 1px solid #222;
+  }
+
+  .wip-tag {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 9999;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #111;
+    background: #fff;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .wip-dot {
+    width: 6px;
+    height: 6px;
+    background: #111;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .left-header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+    color: #fff;
+  }
+
+  .left-header p {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.65;
+  }
+
+  /* ── PART LIST ── */
+  .part-list {
+    flex: 1;
+    padding: 8px 0;
+  }
+
+  .part-item {
+    padding: 14px 32px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.12s, border-color 0.12s;
+    position: relative;
+  }
+
+  .part-item:hover { background: #181818; }
+
+  .part-item.active {
+    background: #181818;
+    border-left-color: #fff;
+  }
+
+  .part-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8e8e8;
+    margin-bottom: 2px;
+  }
+
+  .part-item.active .part-item-name { color: #fff; }
+
+  .part-item-note {
+    font-size: 12px;
+    color: #777;
+  }
+
+  .part-item.unavail .part-item-name { color: #444; }
+  .part-item.unavail .part-item-note { color: #333; }
+  .part-item.unavail { cursor: default; }
+  .part-item.unavail:hover { background: none; }
+
+  .soon-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #3a3a3a;
+    border: 1px solid #2a2a2a;
+    padding: 1px 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* ── LEFT FOOTER NOTES ── */
+  .left-notes {
+    padding: 20px 32px 28px;
+    border-top: 1px solid #2a2a2a;
+  }
+
+  .left-note {
+    font-size: 13px;
+    color: #bbb;
+    line-height: 1.65;
+    margin-bottom: 10px;
+  }
+
+  .left-note:last-child { margin-bottom: 0; }
+
+  .left-note a {
+    color: #e0e0e0;
+    border-bottom: 1px solid #555;
+    transition: color 0.15s;
+  }
+
+  .left-note a:hover { color: #fff; }
+
+  .site-footer {
+    padding: 20px 32px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #aaa;
+    letter-spacing: 0.05em;
+  }
+
+  .site-footer .author {
+    font-size: 12px;
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  .site-footer a { color: #fff; border-bottom: 1px solid #666; padding-bottom: 1px; transition: border-color 0.15s; }
+  .site-footer a:hover { border-color: #fff; }
+  .site-footer .author { text-decoration: none; }
+
+  /* ── RIGHT PANEL ── */
+  .right {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow: hidden;
+  }
+
+  /* ── VIEWER ── */
+  .viewer-wrap {
+    flex: 1;
+    position: relative;
+    background: #0e0e0e;
+    overflow: hidden;
+  }
+
+  #viewer {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .viewer-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+
+  .viewer-empty-icon {
+    width: 48px;
+    height: 48px;
+    color: #2a2a2a;
+  }
+
+  .viewer-empty p {
+    font-size: 13px;
+    color: #333;
+    text-align: center;
+  }
+
+  .viewer-label {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+  }
+
+  .viewer-hint {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #2a2a2a;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+  }
+
+  /* ── PART DETAIL ── */
+  .part-detail {
+    border-top: 1px solid #222;
+    padding: 24px 32px;
+    background: #111;
+  }
+
+  .detail-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .detail-desc {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.65;
+    margin-bottom: 18px;
+    max-width: 540px;
+  }
+
+  .detail-downloads {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .dl-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    border: 1px solid #fff;
+    color: #fff;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    display: inline-block;
+  }
+
+  .dl-btn:hover { background: #fff; color: #111; }
+
+  .dl-btn.dim {
+    border-color: #2e2e2e;
+    color: #333;
+    pointer-events: auto;
+    cursor: default;
+    position: relative;
+  }
+
+  .dl-btn.dim:hover { background: transparent; color: #333; border-color: #2e2e2e; }
+
+  .dl-btn.dim::after {
+    content: 'Soon';
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #222;
+    color: #aaa;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 4px 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+
+  .dl-btn.dim:hover::after { opacity: 1; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .left { height: auto; position: static; }
+    .right { height: 60vh; position: static; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── LEFT ── -->
+  <div class="left">
+
+    <div class="left-header">
+      <h1>Robofinity</h1>
+      <p>Modular robotics chassis — Gridfinity floor + DIN rail walls + M3 heat set inserts. Select a part to preview, then download as STL, STEP, or NX.</p>
+    </div>
+
+    <div class="part-list" id="partList"></div>
+
+    <div class="left-notes">
+      <p class="left-note">
+        All connection points are designed for M3 screws and nuts — no special hardware needed.
+      </p>
+      <p class="left-note">
+        The Gridfinity Baseplate is compatible with the <a href="https://gridfinity.xyz" target="_blank">Gridfinity standard</a> — screw holes + magnet pockets at 32mm pitch.
+      </p>
+      <p class="left-note">
+        A browser-based generator (configure size, export STL) is planned. <a href="https://github.com/lennykossyk/Robofinity" target="_blank">Follow on GitHub</a>.
+      </p>
+    </div>
+
+    <div class="site-footer">
+      <a href="https://linkedin.com/in/lenny-kossyk-2a2033234" target="_blank" class="author">Lenny Kossyk</a>
+      <a href="https://github.com/lennykossyk/Robofinity" target="_blank">GitHub →</a>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT ── -->
+  <div class="right">
+
+    <div class="viewer-wrap">
+      <canvas id="viewer"></canvas>
+
+      <div class="viewer-empty" id="viewerEmpty">
+        <svg class="viewer-empty-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M 24 6 L 42 16 L 42 32 L 24 42 L 6 32 L 6 16 Z"/>
+          <path d="M 24 6 L 24 42 M 6 16 L 24 26 L 42 16"/>
+        </svg>
+        <p>Select a part to preview</p>
+      </div>
+
+      <div class="viewer-label" id="viewerLabel"></div>
+      <div class="viewer-hint" id="viewerHint"></div>
+    </div>
+
+    <div class="part-detail" id="partDetail">
+      <div class="detail-name" id="detailName" style="color: #333; font-size: 14px;">No part selected</div>
+      <div class="detail-desc" id="detailDesc"></div>
+      <div class="detail-downloads" id="detailDownloads"></div>
+    </div>
+
+  </div>
+</div>
+
+<span class="wip-tag"><span class="wip-dot"></span>Project still in development</span>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── PARTS DATA ──
+const parts = [
+  {
+    id: 'baseplate-4x8',
+    name: 'Baseplate',
+    note: 'Small robot floor — 4×8 grid',
+    desc: 'Compact baseplate for smaller robot platforms. 4×8 Gridfinity grid, structural frame for corner and middle pieces.',
+    stl: 'files/stl/4x8-baseplate.stl',
+    step: 'files/step/4x8-baseplate.step',
+    nx: 'files/nx/4x8-baseplate.prt'
+  },
+  {
+    id: 'gridfinity-baseplate-4x8',
+    name: 'Gridfinity Baseplate',
+    note: '42mm grid · screw holes · magnet pockets at 32mm',
+    desc: 'Gridfinity baseplate for the 4×8 chassis — screw holes and 6×2mm magnet pockets at 32mm pitch. Drop-in compatible with all Gridfinity modules.',
+    stl: 'files/stl/4x8-gridfinity-baseplate.stl',
+    step: 'files/step/4x8-gridfinity-baseplate.step',
+    nx: 'files/nx/4x8-gridfinity-baseplate.prt'
+  },
+  {
+    id: 'baseplate-8x8',
+    name: 'Baseplate (Large)',
+    note: 'Large robot floor — 8×8 grid',
+    desc: 'Full-size baseplate for larger robot platforms. 8×8 Gridfinity grid, structural frame for corner and middle pieces.',
+    stl: 'files/stl/8x8-baseplate.stl',
+    step: 'files/step/8x8-baseplate.step',
+    nx: 'files/nx/8x8-baseplate.prt'
+  },
+  {
+    id: 'gridfinity-baseplate-8x8',
+    name: 'Gridfinity Baseplate (Large)',
+    note: '42mm grid · screw holes · magnet pockets at 32mm',
+    desc: 'Gridfinity baseplate for the 8×8 chassis — screw holes and 6×2mm magnet pockets at 32mm pitch. Drop-in compatible with all Gridfinity modules.',
+    stl: 'files/stl/8x8-gridfinity-baseplate.stl',
+    step: 'files/step/8x8-gridfinity-baseplate.step',
+    nx: 'files/nx/8x8-gridfinity-baseplate.prt'
+  },
+  {
+    id: 'corner-piece',
+    name: 'Corner Piece',
+    note: 'Connect baseplate to DIN rail walls',
+    desc: 'Structural corner pillar joining the floor baseplate to the vertical DIN rail walls. Height determines total chassis volume.',
+    stl: 'files/stl/corner-piece.stl',
+    step: 'files/step/corner-piece.step',
+    nx: 'files/nx/corner-piece.prt'
+  },
+  {
+    id: 'middle-piece',
+    name: 'Middle Piece',
+    note: 'Mid-span wall support for larger chassis',
+    desc: 'Additional support pillar for the middle of longer baseplates. Prevents flex and provides extra wall attachment points.',
+    stl: 'files/stl/middle-piece.stl',
+    step: 'files/step/middle-piece.step',
+    nx: 'files/nx/middle-piece.prt'
+  },
+  {
+    id: 'baseplate-connector',
+    name: 'Baseplate Connector',
+    note: 'Link multiple baseplates together',
+    desc: 'Joins two baseplates side-by-side for larger robot platforms without reprinting the entire floor.',
+    stl: 'files/stl/baseplate-connector.stl',
+    step: 'files/step/baseplate-connector.step',
+    nx: 'files/nx/baseplate-connector.prt'
+  },
+  {
+    id: 'wall',
+    name: 'Wall',
+    note: '35mm DIN rail channels for electronics',
+    desc: 'Vertical chassis wall with integrated DIN rail channels. Snap relays or terminal blocks directly onto the wall.',
+    stl: 'files/stl/wall.stl',
+    step: 'files/step/wall.step',
+    nx: 'files/nx/wall.prt'
+  },
+  {
+    id: 'wall-connector',
+    name: 'Wall Connector',
+    note: 'Join adjacent wall panels at corners',
+    desc: 'Clip that joins two wall panels together at corners or along edges. Maintains frame rigidity while allowing individual panels to be swapped.',
+    stl: 'files/stl/wall-connector.stl',
+    step: 'files/step/wall-connector.step',
+    nx: 'files/nx/wall-connector.prt'
+  },
+  {
+    id: 'connector',
+    name: 'Connector',
+    note: 'Snap connector between modules',
+    desc: 'General-purpose snap connector for joining chassis modules.',
+    stl: 'files/stl/connector.stl',
+    step: 'files/step/connector.step',
+    nx: 'files/nx/connector.prt'
+  },
+  {
+    id: 'rail-corner-middle',
+    name: 'Wall Rail — Corner to Middle',
+    note: 'Prevents walls sliding up between corner and middle piece',
+    desc: 'Retention rail locking wall panels between a corner piece and a middle piece. Stops the wall from sliding upward without a lid.',
+    stl: 'files/stl/rail-corner-middle.stl',
+    step: 'files/step/rail-corner-middle.step',
+    nx: 'files/nx/rail-corner-middle.prt'
+  },
+  {
+    id: 'rail-middle-middle',
+    name: 'Wall Rail — Middle to Middle',
+    note: 'Prevents walls sliding up between two middle pieces',
+    desc: 'Retention rail locking wall panels between two middle pieces. Stops the wall from sliding upward without a lid.',
+    stl: 'files/stl/rail-middle-middle.stl',
+    step: 'files/step/rail-middle-middle.step',
+    nx: 'files/nx/rail-middle-middle.prt'
+  },
+  {
+    id: 'example-tile',
+    name: 'Example Tile — Raspberry Pi 5',
+    note: 'Gridfinity mount for Raspberry Pi 5',
+    desc: 'Gridfinity module tile sized for the Raspberry Pi 5. Use as a template to fork your own component mounts.',
+    stl: 'files/stl/example-tile.stl',
+    step: 'files/step/example-tile.step',
+    nx: 'files/nx/example-tile.prt'
+  },
+  {
+    id: 'lid',
+    name: 'Lid',
+    note: 'Not yet designed',
+    desc: 'Top cover for the chassis. Still in design — will be added in a future update.',
+    stl: null, step: null, nx: null,
+    unavail: true
+  },
+];
+
+const assemblyFiles = [
+  'files/stl/8x8-baseplate.stl',
+  'files/stl/8x8-gridfinity-baseplate.stl',
+  'files/stl/corner-piece.stl',
+  'files/stl/middle-piece.stl',
+  'files/stl/wall.stl',
+  'files/stl/wall-connector.stl',
+  'files/stl/connector.stl',
+  'files/stl/rail-corner-middle.stl',
+  'files/stl/rail-middle-middle.stl',
+];
+
+// ── BUILD PART LIST ──
+const listEl = document.getElementById('partList');
+let activePart = null;
+let isAssemblyMode = false;
+
+const allItem = document.createElement('div');
+allItem.className = 'part-item active';
+allItem.innerHTML = `
+  <div class="part-item-name">All Parts — Assembly View</div>
+  <div class="part-item-note">All available parts loaded together</div>
+`;
+allItem.addEventListener('click', () => loadAssembly(allItem));
+listEl.appendChild(allItem);
+
+const divider = document.createElement('div');
+divider.style.cssText = 'height:1px; background:#1e1e1e; margin: 4px 0;';
+listEl.appendChild(divider);
+
+parts.forEach((part) => {
+  const item = document.createElement('div');
+  item.className = 'part-item' + (part.unavail ? ' unavail' : '');
+  item.innerHTML = `
+    <div class="part-item-name">${part.name}${part.unavail ? '<span class="soon-tag">Soon</span>' : ''}</div>
+    <div class="part-item-note">${part.note}</div>
+  `;
+  if (!part.unavail) {
+    item.addEventListener('click', () => selectPart(part, item));
+  }
+  listEl.appendChild(item);
+});
+
+function selectPart(part, itemEl) {
+  document.querySelectorAll('.part-item').forEach(el => el.classList.remove('active'));
+  itemEl.classList.add('active');
+  activePart = part;
+  isAssemblyMode = false;
+
+  document.getElementById('detailName').textContent = part.name;
+  document.getElementById('detailName').style.color = '';
+  document.getElementById('detailDesc').textContent = part.desc;
+
+  const dlEl = document.getElementById('detailDownloads');
+  dlEl.innerHTML = '';
+  ['stl', 'step', 'nx'].forEach(fmt => {
+    const btn = document.createElement('a');
+    btn.textContent = `↓ ${fmt.toUpperCase()}`;
+    if (part[fmt] && fmt === 'stl') {
+      btn.className = 'dl-btn';
+      btn.href = part[fmt];
+      btn.download = '';
+    } else {
+      btn.className = 'dl-btn dim';
+    }
+    dlEl.appendChild(btn);
+  });
+
+  if (part.stl) {
+    loadSTL(part.stl, part.name);
+  } else {
+    showPlaceholder(part.name);
+  }
+}
+
+function loadAssembly(itemEl) {
+  document.querySelectorAll('.part-item').forEach(el => el.classList.remove('active'));
+  itemEl.classList.add('active');
+  isAssemblyMode = true;
+  activePart = null;
+
+  document.getElementById('detailName').textContent = 'Assembly View';
+  document.getElementById('detailName').style.color = '';
+  document.getElementById('detailDesc').textContent = 'Full chassis overview. Select any part on the left to preview and download it individually.';
+  document.getElementById('detailDownloads').innerHTML = '';
+
+  document.getElementById('viewerEmpty').style.display = 'none';
+  document.getElementById('viewerLabel').textContent = 'Assembly View';
+  document.getElementById('viewerHint').textContent = 'Drag to rotate · Scroll to zoom';
+
+  clearScene();
+
+  const promises = assemblyFiles.map(url =>
+    fetch(url)
+      .then(r => r.arrayBuffer())
+      .then(buf => ({ buf, url }))
+      .catch(() => null)
+  );
+
+  Promise.all(promises).then(results => {
+    const loaded = results.filter(Boolean);
+    if (loaded.length === 0) {
+      showPlaceholder('Assembly View');
+      return;
+    }
+
+    const combinedBox = new THREE.Box3();
+
+    loaded.forEach(({ buf }) => {
+      const geo = parseSTL(buf);
+      geo.computeVertexNormals();
+      geo.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+      const mat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.55, metalness: 0.05 });
+      const mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh);
+      meshes.push(mesh);
+      geo.computeBoundingBox();
+      combinedBox.union(geo.boundingBox);
+    });
+
+    const center = new THREE.Vector3();
+    combinedBox.getCenter(center);
+    const size = new THREE.Vector3();
+    combinedBox.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z);
+    target.copy(center);
+    spherical.radius = maxDim * 4.0;
+    updateCamera();
+  });
+}
+
+// ── THREE.JS VIEWER ──
+const canvas = document.getElementById('viewer');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setClearColor(0x0e0e0e, 1);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000);
+
+const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+scene.add(ambient);
+const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
+dir1.position.set(100, 200, 100);
+scene.add(dir1);
+const dir2 = new THREE.DirectionalLight(0xffffff, 0.3);
+dir2.position.set(-100, -50, -100);
+scene.add(dir2);
+
+let isDragging = false, prevMouse = { x: 0, y: 0 };
+let spherical = { theta: 0.0, phi: 0.9, radius: 200 };
+let target = new THREE.Vector3(0, 0, 0);
+
+canvas.addEventListener('mousedown', e => { isDragging = true; autoRotate = false; prevMouse = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - prevMouse.x;
+  const dy = e.clientY - prevMouse.y;
+  spherical.theta -= dx * 0.008;
+  spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + dy * 0.008));
+  prevMouse = { x: e.clientX, y: e.clientY };
+  updateCamera();
+});
+canvas.addEventListener('mouseup', () => { isDragging = false; autoRotate = true; });
+canvas.addEventListener('mouseleave', () => { isDragging = false; autoRotate = true; });
+canvas.addEventListener('wheel', e => {
+  spherical.radius = Math.max(20, Math.min(2000, spherical.radius + e.deltaY * 0.3));
+  updateCamera();
+}, { passive: true });
+
+let prevTouch = null;
+canvas.addEventListener('touchstart', e => { prevTouch = e.touches[0]; autoRotate = false; });
+canvas.addEventListener('touchmove', e => {
+  if (!prevTouch) return;
+  const t = e.touches[0];
+  spherical.theta -= (t.clientX - prevTouch.clientX) * 0.008;
+  spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + (t.clientY - prevTouch.clientY) * 0.008));
+  prevTouch = t;
+  updateCamera();
+  e.preventDefault();
+}, { passive: false });
+canvas.addEventListener('touchend', () => { prevTouch = null; autoRotate = true; });
+
+function updateCamera() {
+  camera.position.set(
+    target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta),
+    target.y + spherical.radius * Math.cos(spherical.phi),
+    target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta)
+  );
+  camera.lookAt(target);
+}
+
+function resize() {
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+let currentMesh = null;
+let meshes = [];
+let autoRotate = true;
+
+function animate() {
+  requestAnimationFrame(animate);
+  if (autoRotate && meshes.length > 0) {
+    spherical.theta += 0.0015;
+    updateCamera();
+  }
+  renderer.render(scene, camera);
+}
+animate();
+
+function clearScene() {
+  meshes.forEach(m => {
+    scene.remove(m);
+    m.geometry.dispose();
+    m.material.dispose();
+  });
+  meshes = [];
+  currentMesh = null;
+}
+
+function fitCamera(geometry) {
+  geometry.computeBoundingBox();
+  const box = geometry.boundingBox;
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  const maxDim = Math.max(size.x, size.y, size.z);
+  target.copy(center);
+  spherical.radius = maxDim * 2.8;
+  updateCamera();
+}
+
+function loadSTL(url, name) {
+  document.getElementById('viewerEmpty').style.display = 'none';
+  document.getElementById('viewerLabel').textContent = name;
+  document.getElementById('viewerHint').textContent = 'Drag to rotate · Scroll to zoom';
+  clearScene();
+
+  fetch(url)
+    .then(r => r.arrayBuffer())
+    .then(buffer => {
+      const geo = parseSTL(buffer);
+      geo.computeVertexNormals();
+      geo.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+      const mat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.6, metalness: 0.05 });
+      currentMesh = new THREE.Mesh(geo, mat);
+      meshes.push(currentMesh);
+      scene.add(currentMesh);
+      fitCamera(geo);
+    })
+    .catch(() => showPlaceholder(name));
+}
+
+function showPlaceholder(name) {
+  document.getElementById('viewerLabel').textContent = name;
+  document.getElementById('viewerHint').textContent = '';
+  document.getElementById('viewerEmpty').style.display = 'flex';
+  document.getElementById('viewerEmpty').querySelector('p').textContent = 'No preview available yet';
+  clearScene();
+}
+
+function parseSTL(buffer) {
+  const geo = new THREE.BufferGeometry();
+  const isBinary = (() => {
+    const header = new Uint8Array(buffer, 0, 80);
+    for (let i = 0; i < 80; i++) {
+      if (header[i] > 127) return true;
+    }
+    const numTriangles = new Uint32Array(buffer, 80, 1)[0];
+    return buffer.byteLength === 84 + numTriangles * 50;
+  })();
+
+  if (isBinary) {
+    const numTri = new Uint32Array(buffer, 80, 1)[0];
+    const verts = new Float32Array(numTri * 9);
+    const norms = new Float32Array(numTri * 9);
+    const dv = new DataView(buffer, 84);
+    for (let i = 0; i < numTri; i++) {
+      const o = i * 50;
+      const nx = dv.getFloat32(o, true);
+      const ny = dv.getFloat32(o + 4, true);
+      const nz = dv.getFloat32(o + 8, true);
+      for (let j = 0; j < 3; j++) {
+        const vo = o + 12 + j * 12;
+        verts[i * 9 + j * 3]     = dv.getFloat32(vo,      true);
+        verts[i * 9 + j * 3 + 1] = dv.getFloat32(vo + 4,  true);
+        verts[i * 9 + j * 3 + 2] = dv.getFloat32(vo + 8,  true);
+        norms[i * 9 + j * 3]     = nx;
+        norms[i * 9 + j * 3 + 1] = ny;
+        norms[i * 9 + j * 3 + 2] = nz;
+      }
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+    geo.setAttribute('normal',   new THREE.BufferAttribute(norms, 3));
+  } else {
+    const text = new TextDecoder().decode(buffer);
+    const verts = [];
+    const re = /vertex\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      verts.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts), 3));
+  }
+  return geo;
+}
+
+loadAssembly(allItem);
+</script>
+</body>
+</html>
