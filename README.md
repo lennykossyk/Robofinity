@@ -8,4 +8,4 @@ Open-source modular robotics chassis — Gridfinity floor, DIN rail walls, M3 sc
 
 - [Three.js r128](https://threejs.org) — STL viewer
 - [Gridfinity standard](https://gridfinity.xyz) — base grid system
-- Part of the [ORCA](https://github.com) robot platform
+- Part of the [ORKA](https://github.com/lennykossyk/ORKA) robot
